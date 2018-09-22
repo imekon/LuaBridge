@@ -9,6 +9,37 @@ struct IssueTests : TestBase
 {
 };
 
+struct Track
+{
+  std::string name;
+};
+
+#include <LuaBridge/Vector.h>
+
+int initSongs(lua_State* L)
+{
+   std::vector <Track*> tracks;
+   tracks.push_back (new Track {"Song1"});
+   tracks.push_back (new Track {"Song2"});
+   luabridge::push (L, tracks);
+   return 1;
+}
+
+TEST_F (IssueTests, Issue76)
+{
+  luabridge::getGlobalNamespace (L)
+    .beginClass <Track> ("Track")
+    .addData ("name", &Track::name)
+    .endClass ()
+    .addCFunction ("init_songs", &initSongs);
+
+    runLua (
+      "local songs = init_songs () "
+      "for index, song in ipairs (songs) do "
+      "    print (song.name) "
+      "end");
+}
+
 struct AbstractClass
 {
   virtual int sum (int a, int b) = 0;
